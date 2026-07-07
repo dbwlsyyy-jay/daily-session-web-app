@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# secrets — 절대 커밋 금지
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# build output
+dist/
+build/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
