@@ -473,6 +473,20 @@ a:focus-visible,
   padding: 0 var(--space-2) var(--space-4);
 }
 
+.history-edit-trigger {
+  margin-top: var(--space-3);
+}
+
+.history-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.history-edit-actions .btn-link {
+  margin-top: 0;
+}
+
 @media (max-width: 480px) {
   .history-summary {
     text-align: left;

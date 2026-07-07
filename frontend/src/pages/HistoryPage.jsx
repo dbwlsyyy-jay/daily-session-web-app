@@ -42,6 +42,42 @@ export default function HistoryPage() {
     };
   }, []);
 
+  function startEdit(entry, dateStr) {
+    setEditingDate(dateStr);
+    setDraft({ yesterday: entry.yesterday ?? "", today: entry.today ?? "" });
+    setEditError("");
+  }
+
+  function toggleOpen(dateStr) {
+    setOpenDate((current) => (current === dateStr ? null : dateStr));
+    setEditingDate(null);
+    setEditError("");
+  }
+
+  async function handleEditSave(e, dateStr) {
+    e.preventDefault();
+    setSavingEdit(true);
+    setEditError("");
+    try {
+      await authedRequest((token) =>
+        api.saveEntry(token, { date: dateStr, yesterday: draft.yesterday, today: draft.today })
+      );
+      setEntries((prev) =>
+        prev.map((entry) =>
+          toKSTDateString(entry.date) === dateStr
+            ? { ...entry, yesterday: draft.yesterday, today: draft.today }
+            : entry
+        )
+      );
+      setEditingDate(null);
+      setToastMessage("저장되었습니다.");
+    } catch (err) {
+      setEditError(err.message ?? "저장에 실패했습니다.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   return (
     <div className="card">
       <h2>내 기록</h2>
@@ -58,13 +94,15 @@ export default function HistoryPage() {
           const isOpen = openDate === dateStr;
           const summary = (entry.today || entry.yesterday || "").split("\n")[0];
 
+          const isEditing = editingDate === dateStr;
+
           return (
             <li key={dateStr} className="history-item">
               <button
                 type="button"
                 className="history-toggle"
                 aria-expanded={isOpen}
-                onClick={() => setOpenDate(isOpen ? null : dateStr)}
+                onClick={() => toggleOpen(dateStr)}
               >
                 <span className="history-date">{formatDateForDisplay(dateStr)}</span>
                 <span className="history-summary">{summary || "내용 없음"}</span>
@@ -73,24 +111,72 @@ export default function HistoryPage() {
 
               <div className={`history-detail-wrapper${isOpen ? " open" : ""}`}>
                 <div className="history-detail">
-                  <div className="entry-section">
-                    <span className="entry-label">어제 한 일</span>
-                    <p>
-                      <MultilineText text={entry.yesterday} />
-                    </p>
-                  </div>
-                  <div className="entry-section">
-                    <span className="entry-label">오늘 할 일</span>
-                    <p>
-                      <MultilineText text={entry.today} />
-                    </p>
-                  </div>
+                  {isEditing ? (
+                    <form
+                      className="history-edit-form"
+                      onSubmit={(e) => handleEditSave(e, dateStr)}
+                    >
+                      <label className="field">
+                        <span>어제 한 일</span>
+                        <textarea
+                          rows={4}
+                          value={draft.yesterday}
+                          onChange={(e) => setDraft((d) => ({ ...d, yesterday: e.target.value }))}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>오늘 할 일</span>
+                        <textarea
+                          rows={4}
+                          value={draft.today}
+                          onChange={(e) => setDraft((d) => ({ ...d, today: e.target.value }))}
+                        />
+                      </label>
+                      <ErrorBanner message={editError} />
+                      <div className="history-edit-actions">
+                        <button type="submit" className="btn-primary" disabled={savingEdit}>
+                          {savingEdit ? "저장 중..." : "저장"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => setEditingDate(null)}
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="entry-section">
+                        <span className="entry-label">어제 한 일</span>
+                        <p>
+                          <MultilineText text={entry.yesterday} />
+                        </p>
+                      </div>
+                      <div className="entry-section">
+                        <span className="entry-label">오늘 할 일</span>
+                        <p>
+                          <MultilineText text={entry.today} />
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-link history-edit-trigger"
+                        onClick={() => startEdit(entry, dateStr)}
+                      >
+                        수정
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </li>
           );
         })}
       </ul>
+
+      <Toast message={toastMessage} onClose={() => setToastMessage("")} />
     </div>
   );
 }
