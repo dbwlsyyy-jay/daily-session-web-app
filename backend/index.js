@@ -1,13 +1,13 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
+import authRouter from "./routes/auth.js";
+import entriesRouter from "./routes/entries.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
 
 // 셋업 확인용 hello 엔드포인트
@@ -20,9 +20,8 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-// TODO: 다음 블록에서 추가
-// - POST /auth/signup, POST /auth/login
-// - PUT /entries, GET /entries, GET /entries/me, GET /entries/me/history
+app.use("/auth", authRouter);
+app.use("/entries", entriesRouter);
 
 app.listen(PORT, () => {
   console.log(`API server running on port ${PORT}`);
