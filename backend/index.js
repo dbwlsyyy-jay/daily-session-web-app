@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth.js";
 import entriesRouter from "./routes/entries.js";
+import usersRouter from "./routes/users.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -22,6 +23,7 @@ app.get("/health", (req, res) => {
 
 app.use("/auth", authRouter);
 app.use("/entries", entriesRouter);
+app.use("/users", usersRouter);
 
 app.listen(PORT, () => {
   console.log(`API server running on port ${PORT}`);

@@ -60,7 +60,33 @@ router.get("/me/history", requireAuth, async (req, res) => {
 });
 
 router.get("/", requireAuth, async (req, res) => {
-  const date = req.query.date || todayKST();
+  const { date: dateParam, user_id: userIdParam } = req.query;
+
+  // date와 user_id 쿼리가 둘 다 오면 date 기준(그날 전원 조회)을 우선한다 —
+  // 기존 팀 뷰가 보내는 요청 형태와 동일하게 유지하기 위함.
+  // user_id 분기는 date가 없고 user_id만 있을 때만 탄다.
+  if (!dateParam && userIdParam) {
+    const targetUserId = Number(userIdParam);
+    if (!Number.isInteger(targetUserId)) {
+      return res.status(400).json({ error: "user_id는 정수여야 합니다." });
+    }
+
+    try {
+      const [rows] = await pool.query(
+        `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS date, yesterday, today
+         FROM standup_entries
+         WHERE user_id = ?
+         ORDER BY date DESC`,
+        [targetUserId]
+      );
+      return res.json(rows);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "기록 조회 중 오류가 발생했습니다." });
+    }
+  }
+
+  const date = dateParam || todayKST();
 
   if (!isValidDateString(date)) {
     return res.status(400).json({ error: "date는 YYYY-MM-DD 형식이어야 합니다." });
@@ -68,7 +94,7 @@ router.get("/", requireAuth, async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT u.name AS name, e.yesterday, e.today
+      `SELECT u.id AS user_id, u.name AS name, e.yesterday, e.today
        FROM standup_entries e
        JOIN users u ON u.id = e.user_id
        WHERE e.date = ?
