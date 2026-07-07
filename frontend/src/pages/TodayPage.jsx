@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import useAuthedRequest from "../hooks/useAuthedRequest.js";
+import Spinner from "../components/Spinner.jsx";
+import ErrorBanner from "../components/ErrorBanner.jsx";
+import Toast from "../components/Toast.jsx";
 import { todayKST, formatDateForDisplay } from "../lib/kst.js";
 
 export default function TodayPage() {
@@ -12,7 +15,7 @@ export default function TodayPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [savedMessage, setSavedMessage] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +45,9 @@ export default function TodayPage() {
     e.preventDefault();
     setSaving(true);
     setError("");
-    setSavedMessage("");
     try {
       await authedRequest((token) => api.saveEntry(token, { date, yesterday, today }));
-      setSavedMessage("저장되었습니다.");
+      setToastMessage("저장되었습니다.");
     } catch (err) {
       setError(err.message ?? "저장에 실패했습니다.");
     } finally {
@@ -59,7 +61,7 @@ export default function TodayPage() {
       <p className="date-label">{formatDateForDisplay(date)}</p>
 
       {loading ? (
-        <p className="loading-text">불러오는 중...</p>
+        <Spinner />
       ) : (
         <form onSubmit={handleSave} className="entry-form">
           <label className="field">
@@ -67,10 +69,7 @@ export default function TodayPage() {
             <textarea
               rows={6}
               value={yesterday}
-              onChange={(e) => {
-                setYesterday(e.target.value);
-                setSavedMessage("");
-              }}
+              onChange={(e) => setYesterday(e.target.value)}
               placeholder="어제 진행한 작업을 적어주세요"
             />
           </label>
@@ -80,22 +79,20 @@ export default function TodayPage() {
             <textarea
               rows={6}
               value={today}
-              onChange={(e) => {
-                setToday(e.target.value);
-                setSavedMessage("");
-              }}
+              onChange={(e) => setToday(e.target.value)}
               placeholder="오늘 진행할 작업을 적어주세요"
             />
           </label>
 
-          {error && <p className="error-text">{error}</p>}
-          {savedMessage && <p className="success-text">{savedMessage}</p>}
+          <ErrorBanner message={error} />
 
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? "저장 중..." : "저장"}
           </button>
         </form>
       )}
+
+      <Toast message={toastMessage} onClose={() => setToastMessage("")} />
     </div>
   );
 }

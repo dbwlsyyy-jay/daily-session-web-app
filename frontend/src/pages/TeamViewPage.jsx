@@ -3,6 +3,9 @@ import { api } from "../api.js";
 import useAuthedRequest from "../hooks/useAuthedRequest.js";
 import MultilineText from "../components/MultilineText.jsx";
 import Modal from "../components/Modal.jsx";
+import Spinner from "../components/Spinner.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import ErrorBanner from "../components/ErrorBanner.jsx";
 import { todayKST, formatDateForDisplay } from "../lib/kst.js";
 
 export default function TeamViewPage() {
@@ -47,10 +50,10 @@ export default function TeamViewPage() {
         <p className="date-label">{formatDateForDisplay(date)}</p>
       </div>
 
-      {loading && <p className="loading-text">불러오는 중...</p>}
-      {error && <p className="error-text">{error}</p>}
+      {loading && <Spinner />}
+      <ErrorBanner message={error} />
       {!loading && !error && entries.length === 0 && (
-        <p className="empty-text">이 날짜에 작성된 기록이 없습니다.</p>
+        <EmptyState icon="📭" message="이 날짜엔 아직 작성된 기록이 없어요." />
       )}
 
       <div className="card-grid">

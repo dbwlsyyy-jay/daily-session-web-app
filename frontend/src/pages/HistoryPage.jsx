@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import useAuthedRequest from "../hooks/useAuthedRequest.js";
 import MultilineText from "../components/MultilineText.jsx";
+import Spinner from "../components/Spinner.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import ErrorBanner from "../components/ErrorBanner.jsx";
+import ChevronIcon from "../components/ChevronIcon.jsx";
+import Toast from "../components/Toast.jsx";
 import { toKSTDateString, formatDateForDisplay } from "../lib/kst.js";
 
 export default function HistoryPage() {
@@ -10,6 +15,11 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openDate, setOpenDate] = useState(null);
+  const [editingDate, setEditingDate] = useState(null);
+  const [draft, setDraft] = useState({ yesterday: "", today: "" });
+  const [editError, setEditError] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -36,10 +46,10 @@ export default function HistoryPage() {
     <div className="card">
       <h2>내 기록</h2>
 
-      {loading && <p className="loading-text">불러오는 중...</p>}
-      {error && <p className="error-text">{error}</p>}
+      {loading && <Spinner />}
+      <ErrorBanner message={error} />
       {!loading && !error && entries.length === 0 && (
-        <p className="empty-text">아직 작성한 기록이 없습니다.</p>
+        <EmptyState message="아직 작성된 기록이 없어요." />
       )}
 
       <ul className="history-list">
@@ -53,13 +63,15 @@ export default function HistoryPage() {
               <button
                 type="button"
                 className="history-toggle"
+                aria-expanded={isOpen}
                 onClick={() => setOpenDate(isOpen ? null : dateStr)}
               >
                 <span className="history-date">{formatDateForDisplay(dateStr)}</span>
                 <span className="history-summary">{summary || "내용 없음"}</span>
+                <ChevronIcon open={isOpen} />
               </button>
 
-              {isOpen && (
+              <div className={`history-detail-wrapper${isOpen ? " open" : ""}`}>
                 <div className="history-detail">
                   <div className="entry-section">
                     <span className="entry-label">어제 한 일</span>
@@ -74,7 +86,7 @@ export default function HistoryPage() {
                     </p>
                   </div>
                 </div>
-              )}
+              </div>
             </li>
           );
         })}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import ErrorBanner from "../components/ErrorBanner.jsx";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -93,7 +94,7 @@ export default function LoginPage() {
           />
         </label>
 
-        {error && <p className="error-text">{error}</p>}
+        <ErrorBanner message={error} />
 
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? "처리 중..." : mode === "login" ? "로그인" : "회원가입"}

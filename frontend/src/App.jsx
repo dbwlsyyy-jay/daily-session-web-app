@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import NavBar from "./components/NavBar.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -8,13 +8,16 @@ import HistoryPage from "./pages/HistoryPage.jsx";
 
 function ProtectedLayout() {
   const { token } = useAuth();
+  const location = useLocation();
   if (!token) return <Navigate to="/login" replace />;
 
   return (
     <>
       <NavBar />
       <main className="page">
-        <Outlet />
+        <div key={location.pathname} className="page-transition">
+          <Outlet />
+        </div>
       </main>
     </>
   );
